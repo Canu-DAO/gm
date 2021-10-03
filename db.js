@@ -1,6 +1,10 @@
 /* 
-- Store gm's in a simple JSON file
-- Each guild 
+* Store gm's in a simple JSON file
+* A JSONdb for each guild is saved in ./db/${guildId}.json
+* gm info is keyed by userId
+  * name: username#num
+  * ts: last gm timestamp (that was incremented)
+  * streak: current streak
 */
 
 import JSONdb from 'simple-json-db';
