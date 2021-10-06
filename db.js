@@ -3,7 +3,7 @@
 * A JSONdb for each guild is saved in ./db/${guildId}.json
 * gm info is keyed by userId
   * name: username#num
-  * ts: last gm timestamp (that was incremented)
+  * today: did the user gm today?
   * streak: current streak
 */
 
@@ -34,25 +34,25 @@ export async function configJSONdb(channel) {
   db.set('channel', channel);
 } 
 
-export async function initUser(id, username, ts) {
+export async function initUser(id, username, today) {
   const s = {
     'name': username,
-    'ts': ts,
-    'streak': 1
+    'today': 0,
+    'streak': 0
   }
   db.set(id, s);
 }
 
-export async function incrUserStreak(id, ts) {
+export async function incrUserStreak(id) {
   const data = db.get(id);
   data.streak += 1;
-  data.ts = ts;
+  data.today = 1;
   db.set(id, data);
 }
 
 export async function clearUserStreak(id) {
   const data = db.get(id);
-  data.streak = 1;
+  data.streak = 0;
   db.set(data)
 }
 
@@ -62,4 +62,19 @@ export async function userExist(id) {
 
 export async function getUser(id) {
   return db.get(id);
+}
+
+export async function clearTodayFlags() {
+  const allData = db.JSON();
+  Object.keys(allData).forEach( (id, i) => {
+    if (i > 0) {
+      const data = db.get(id)
+      console.log(data.today);
+      if (data.today == 0) {
+        data.streak = 0;
+      }
+      data.today = 0;
+      db.set(id, data);
+    }
+  });
 }
