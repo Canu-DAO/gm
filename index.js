@@ -1,7 +1,7 @@
 import { Client, Intents, MessageEmbed, MessageAttachment } from 'discord.js';
 import dayjs from 'dayjs';
 import { config } from './config.js';
-import { loadJSONdb, initUser, incrUserStreak, userExist, getUser, getRank, clearUserStreak } from './db.js';
+import { loadJSONdb, initUser, incrUserStreak, userExist, getUserStreak, getUserTime, getRank, clearUserStreak } from './db.js';
 
 const discord = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 
@@ -10,7 +10,7 @@ function log(text) {
 }
 
 async function checkTime(id, now) {
-  const formerRaw = await getUser(id).then( x => { return x.ts });
+  const formerRaw = await getUserTime(id);
   const formerTime = dayjs(formerRaw);
   if ((now > formerTime.add(config.clearanceTimeH,'hours') && now < formerTime.endOf('day').add(1, 'day'))) {
     return 1;
@@ -30,35 +30,25 @@ discord.on('messageCreate', async m => {
     if (m.content.toLowerCase() == config.keyword) {
       const now = dayjs().valueOf();
       if (await userExist(id) == false) {
-        await initUser(id, username, now);
+        await initUser(id, username, now).then(await incrUserStreak(id, now));
       } else {
         const check = await checkTime(id, now);
         if (check == 1) {
           await incrUserStreak(id, now);
         } else if (check == -1) {
-          await clearUserStreak(id, now);
+          await clearUserStreak(id, now).then(await incrUserStreak(id, now));
         }
       }
 
       // !commands
     } else if (m.content == '!gm') {
-      const now = dayjs().valueOf();
-      const check = await checkTime(id, now);
-      if (check == -1) {
-        await clearUserStreak();
-      }
-      const streak = await getUser(id).then( d => { 
-        if (d == undefined) {
-          return 0;
-        } else {
-          return d.streak;
-        }
-      });
+      const streak = await getUserStreak(id).catch( _ => 0 )
       m.reply(`gm ${username}, you have a streak of ${streak}.`);
     } else if (m.content == '!gm rank') {
       const rank = await getRank();
-      rank[1] == undefined ? rank.push(['no one', 'NA']) : null;
-      rank[2] == undefined ? rank.push(['no one', 'NA']) : null;
+      (rank[0] == undefined || rank[0][1] == '0') ? rank[0] = (['no one', 'NA']) : null;
+      (rank[1] == undefined || rank[1][1] == '0') ? rank[1] = (['no one', 'NA']) : null;
+      (rank[2] == undefined || rank[2][1] == '0') ? rank[2] = (['no one', 'NA']) : null;
       m.reply(`🥇 ${rank[0][0]} -> ${rank[0][1]}\n🥈 ${rank[1][0]} -> ${rank[1][1]}\n🥉 ${rank[2][0]} -> ${rank[2][1]}\n`);
     }
   }

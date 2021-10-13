@@ -35,7 +35,7 @@ export async function initUser(id, username, ts) {
   const s = {
     'name': username,
     'ts': ts,
-    'streak': 1
+    'streak': 0
   }
   db.set(id, s);
 }
@@ -58,8 +58,12 @@ export async function userExist(id) {
   return db.has(id);
 }
 
-export async function getUser(id) {
-  return db.get(id);
+export async function getUserTime(id) {
+  return db.get(id).ts;
+}
+
+export async function getUserStreak(id) {
+  return db.get(id).streak;
 }
 
 export async function getRank() {
