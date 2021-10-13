@@ -60,11 +60,3 @@ discord.once('ready', async c => {
 });
 
 discord.login(config.DISCORD_KEY);
-
-var interval = dayjs().endOf('day').add(1, 'millisecond') - dayjs();
-setInterval(async function() { 
-  await clearTodayFlags();
-  interval = 24 * 60 * 60 * 1000;
-  log(`Cleared today flag`);
-  await discord.channels.cache.get(config.DISCORD_CHANNEL_ID).send('gm');
-}, interval);
