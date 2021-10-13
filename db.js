@@ -11,49 +11,47 @@ import JSONdb from 'simple-json-db';
 
 var db;
 
-export async function loadJSONdb(path, guildName, channelName, channelId) {
+export async function loadJSONdb(path, guildName, channelName, channelId, keyword='gm') {
   const options = {
-    asyncWrite: true, 
+    asyncWrite: false, 
     syncOnWrite: true,
     jsonSpaces: 4 };
   const fullPath = `${process.cwd()}${path}.json`
   const config = {
     'guildName': guildName,
     'channelName': channelName,
-    'channelId': channelId
+    'channelId': channelId,
+    'keyword': keyword
   };
   try {
     db = new JSONdb(fullPath, options);
-    db.set('config', config)
+    db.set('config', config);
   } catch(e) {
-    console.log('Error creating db!');
+    console.log(`${new Date().toISOString()}\t${e}`);
   }
 }
 
-export async function configJSONdb(channel) {
-  db.set('channel', channel);
-} 
-
-export async function initUser(id, username, today) {
+export async function initUser(id, username, ts) {
   const s = {
     'name': username,
-    'today': 0,
-    'streak': 0
+    'ts': ts,
+    'streak': 1
   }
   db.set(id, s);
 }
 
-export async function incrUserStreak(id) {
+export async function incrUserStreak(id, ts) {
   const data = db.get(id);
   data.streak += 1;
-  data.today = 1;
+  data.ts = ts;
   db.set(id, data);
 }
 
 export async function clearUserStreak(id) {
   const data = db.get(id);
   data.streak = 0;
-  db.set(data)
+  data.ts = 0;
+  db.set(id, data)
 }
 
 export async function userExist(id) {
@@ -64,17 +62,13 @@ export async function getUser(id) {
   return db.get(id);
 }
 
-export async function clearTodayFlags() {
+export async function getRank() {
   const allData = db.JSON();
-  Object.keys(allData).forEach( (id, i) => {
-    if (i > 0) {
-      const data = db.get(id)
-      console.log(data.today);
-      if (data.today == 0) {
-        data.streak = 0;
-      }
-      data.today = 0;
-      db.set(id, data);
-    }
-  });
+  var streaks = [];
+  const keys = Object.keys(allData);
+  keys.splice(keys.indexOf('config'),1);
+  for (let i = 0; i < keys.length; i++) {
+    streaks.push([allData[keys[i]].name, allData[keys[i]].streak]);
+  }
+  return streaks.sort( (a, b) => {  return a[1] < b[1] ? 1 : -1 });
 }
