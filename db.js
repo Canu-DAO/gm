@@ -3,20 +3,23 @@
 * A JSONdb for each guild is saved in ./db/${guildId}.json
 * gm info is keyed by userId
   * name: username#num
-  * today: did the user gm today?
+  * ts: time stamp of last gm
   * streak: current streak
 */
 
 import JSONdb from 'simple-json-db';
 
 var db;
+const storagePath = '/db/';
 
-export async function loadJSONdb(path, guildName, channelName, channelId, keyword='gm') {
-  const options = {
+const options = {
     asyncWrite: false, 
     syncOnWrite: true,
-    jsonSpaces: 4 };
-  const fullPath = `${process.cwd()}${path}.json`
+    jsonSpaces: 4 
+  };
+
+export async function configJSONdb(guildId, guildName, channelName, channelId, keyword='gm') {
+  const fullPath = `${process.cwd()}${storagePath}${guildId}.json`
   const config = {
     'guildName': guildName,
     'channelName': channelName,
@@ -29,6 +32,15 @@ export async function loadJSONdb(path, guildName, channelName, channelId, keywor
   } catch(e) {
     console.log(`${new Date().toISOString()}\t${e}`);
   }
+}
+
+export async function loadJSONdb(guildId) {
+  const fullPath = `${process.cwd()}${storagePath}${guildId}.json`
+  db = new JSONdb(fullPath, options);
+}
+
+export async function getConfig() {
+  return db.get('config');
 }
 
 export async function initUser(id, username, ts) {

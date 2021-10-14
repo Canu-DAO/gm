@@ -1,7 +1,7 @@
-import { Client, Intents, MessageEmbed, MessageAttachment } from 'discord.js';
+import { Client, Intents, Permissions } from 'discord.js';
 import dayjs from 'dayjs';
-import { config } from './config.js';
-import { loadJSONdb, initUser, incrUserStreak, userExist, getUserStreak, getUserTime, getRank, clearUserStreak } from './db.js';
+import { keys } from './keys.js';
+import { configJSONdb, loadJSONdb, getConfig, initUser, incrUserStreak, userExist, getUserStreak, getUserTime, getRank, clearUserStreak } from './db.js';
 
 const discord = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 
@@ -12,7 +12,7 @@ function log(text) {
 async function checkTime(id, now) {
   const formerRaw = await getUserTime(id);
   const formerTime = dayjs(formerRaw);
-  if ((now > formerTime.add(config.clearanceTimeH,'hours') && now < formerTime.endOf('day').add(1, 'day'))) {
+  if ((now > formerTime.add(15,'hours') && now < formerTime.endOf('day').add(1, 'day'))) {
     return 1;
   } else if (now > formerTime.endOf('day').add(1, 'day')) {
     return -1;
@@ -22,12 +22,28 @@ async function checkTime(id, now) {
 }
 
 discord.on('messageCreate', async m => {
-  if (!m.author.bot && m.channelId == config.DISCORD_CHANNEL_ID) {
-    await loadJSONdb(`${config.storagePath}${m.guildId}`, m.guild.name, m.channel.name, m.channel.id);
+  if (!m.author.bot) {
+
+    await loadJSONdb(m.guild.id);
+    const config = await getConfig(m.guild.id).then( (c) => { 
+      if (c == undefined) { return 0 }
+      else { return c }
+    });
+
+    if (m.content.indexOf('!gm setup') == 0) {
+      if (m.channel.permissionsFor(m.author).has(Permissions.FLAGS.ADMINISTRATOR)) {
+        const keyword = m.content.split('!gm setup ')[1];
+        configJSONdb(m.guildId, m.guild.name, m.channel.name, m.channel.id, keyword)
+        m.reply(`Setup to track ${keyword} in ${m.channel.name}`);
+      } else { 
+        m.reply('Must be admin to perform setup!');
+      }
+    } else if (config == 0) return m.reply('Do setup with\n```!gm setup <keyword>```');
+
     const id = m.author.id;
     const username = `${m.author.username}#${m.author.discriminator}`;
     
-    if (m.content.toLowerCase() == config.keyword) {
+    if (m.content.toLowerCase() == config.keyword && config.channelId == m.channel.id) {
       const now = dayjs().valueOf();
       if (await userExist(id) == false) {
         await initUser(id, username, now).then(await incrUserStreak(id, now));
@@ -41,9 +57,12 @@ discord.on('messageCreate', async m => {
       }
 
       // !commands
+
     } else if (m.content == '!gm') {
-      const streak = await getUserStreak(id).catch( _ => 0 )
+      const streak = await getUserStreak(id).catch( () => 0 )
+      const rank = await getRank();
       m.reply(`gm ${username}, you have a streak of ${streak}.`);
+
     } else if (m.content == '!gm rank') {
       const rank = await getRank();
       (rank[0] == undefined || rank[0][1] == '0') ? rank[0] = (['no one', 'NA']) : null;
@@ -56,7 +75,6 @@ discord.on('messageCreate', async m => {
 
 discord.once('ready', async c => {
   log(`Ready! Logged in as ${c.user.tag}`);
-  await discord.channels.cache.get(config.DISCORD_CHANNEL_ID).send('gm');
 });
 
-discord.login(config.DISCORD_KEY);
+discord.login(keys.DISCORD_KEY);
