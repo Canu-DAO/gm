@@ -30,20 +30,20 @@ discord.on('messageCreate', async m => {
       else { return c }
     });
 
+    const id = m.author.id;
+    const username = `${m.author.username}#${m.author.discriminator}`;
+
     if (m.content.indexOf('!gm setup') == 0) {
       if (m.channel.permissionsFor(m.author).has(Permissions.FLAGS.ADMINISTRATOR)) {
-        const keyword = m.content.split('!gm setup ')[1];
+        var keyword = m.content.split('!gm setup')[1].trim();
+        if (keyword == '') { keyword = 'gm'; }
         configJSONdb(m.guildId, m.guild.name, m.channel.name, m.channel.id, keyword)
         m.reply(`Setup to track ${keyword} in ${m.channel.name}`);
       } else { 
         m.reply('Must be admin to perform setup!');
       }
-    } else if (config == 0) return m.reply('Do setup with\n```!gm setup <keyword>```');
 
-    const id = m.author.id;
-    const username = `${m.author.username}#${m.author.discriminator}`;
-    
-    if (m.content.toLowerCase() == config.keyword && config.channelId == m.channel.id) {
+    } else if (m.content.toLowerCase() == config.keyword && config.channelId == m.channel.id) {
       const now = dayjs().valueOf();
       if (await userExist(id) == false) {
         await initUser(id, username, now).then(await incrUserStreak(id, now));
@@ -57,18 +57,24 @@ discord.on('messageCreate', async m => {
       }
 
       // !commands
-
     } else if (m.content == '!gm') {
-      const streak = await getUserStreak(id).catch( () => 0 )
-      const rank = await getRank();
-      m.reply(`gm ${username}, you have a streak of ${streak}.`);
+      if (config == 0) { 
+        return m.reply('Do setup with\n```!gm setup <keyword>```')
+      } else {
+        const streak = await getUserStreak(id).catch( () => 0 )
+        m.reply(`gm ${username}, you have a streak of ${streak}.`);
+      }
 
     } else if (m.content == '!gm rank') {
-      const rank = await getRank();
-      (rank[0] == undefined || rank[0][1] == '0') ? rank[0] = (['no one', 'NA']) : null;
-      (rank[1] == undefined || rank[1][1] == '0') ? rank[1] = (['no one', 'NA']) : null;
-      (rank[2] == undefined || rank[2][1] == '0') ? rank[2] = (['no one', 'NA']) : null;
-      m.reply(`🥇 ${rank[0][0]} -> ${rank[0][1]}\n🥈 ${rank[1][0]} -> ${rank[1][1]}\n🥉 ${rank[2][0]} -> ${rank[2][1]}\n`);
+      if (config == 0) { 
+        return m.reply('Do setup with\n```!gm setup <keyword>```')
+      } else {
+        const rank = await getRank();
+        (rank[0] == undefined || rank[0][1] == '0') ? rank[0] = (['no one', 'NA']) : null;
+        (rank[1] == undefined || rank[1][1] == '0') ? rank[1] = (['no one', 'NA']) : null;
+        (rank[2] == undefined || rank[2][1] == '0') ? rank[2] = (['no one', 'NA']) : null;
+        m.reply(`🥇 ${rank[0][0]} -> ${rank[0][1]}\n🥈 ${rank[1][0]} -> ${rank[1][1]}\n🥉 ${rank[2][0]} -> ${rank[2][1]}\n`);
+      }
     }
   }
 });
