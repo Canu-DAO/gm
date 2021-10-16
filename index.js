@@ -59,15 +59,18 @@ discord.on('messageCreate', async m => {
       // !commands
     } else if (m.content == '!gm') {
       if (config == 0) { 
-        return m.reply('Do setup with\n```!gm setup <keyword>```')
+        return m.reply('Do setup with\n```!gm setup');
       } else {
-        const streak = await getUserStreak(id).catch( () => 0 )
+        const now = dayjs().valueOf();
+        const check = await checkTime(id, now).catch( () => 0);
+        if (check == -1) clearUserStreak(id);
+        const streak = await getUserStreak(id).catch( () => 0 );
         m.reply(`gm ${username}, you have a streak of ${streak}.`);
       }
 
     } else if (m.content == '!gm rank') {
       if (config == 0) { 
-        return m.reply('Do setup with\n```!gm setup <keyword>```')
+        return m.reply('Do setup with\n```!gm setup```')
       } else {
         const rank = await getRank();
         (rank[0] == undefined || rank[0][1] == '0') ? rank[0] = (['no one', 'NA']) : null;
@@ -75,6 +78,8 @@ discord.on('messageCreate', async m => {
         (rank[2] == undefined || rank[2][1] == '0') ? rank[2] = (['no one', 'NA']) : null;
         m.reply(`🥇 ${rank[0][0]} -> ${rank[0][1]}\n🥈 ${rank[1][0]} -> ${rank[1][1]}\n🥉 ${rank[2][0]} -> ${rank[2][1]}\n`);
       }
+    } else if (m.content == '!gm help') {
+        m.reply(`${config.keyword}\nSay ${config.keyword} to your frens once a day! Miss a day and your streak gets reset :(\nCheck your streak with \`!gm\`\nCheck the top ${config.keyword}'ers with \`!gm rank\`\nLet the ${config.keyword}'ing begin!`);
     }
   }
 });
