@@ -59,7 +59,7 @@ discord.on('messageCreate', async m => {
       // !commands
     } else if (m.content == '!gm') {
       if (config == 0) { 
-        return m.reply('Do setup with\n```!gm setup');
+        return m.reply('Do setup with\n```!gm setup```');
       } else {
         const now = dayjs().valueOf();
         const check = await checkTime(id, now).catch( () => 0);
