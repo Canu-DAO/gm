@@ -1,16 +1,16 @@
 import { Client, Intents, Permissions } from 'discord.js';
 import dayjs from 'dayjs';
 import { keys } from './keys.js';
-import { configJSONdb, loadJSONdb, getConfig, initUser, incrUserStreak, userExist, getUserStreak, getUserTime, getRank, clearUserStreak } from './db.js';
+import { mongoConnect, insertGuild, getConfig, initUser, getUser, getRank, incrUserStreak, clearUserStreak } from './mongo.js';
 
-const discord = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
+const discord = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS] });
 
 function log(text) {
   console.log(`${new Date().toISOString()}\t${text}`);
 }
 
-async function checkTime(id, now) {
-  const formerRaw = await getUserTime(id);
+async function checkTime(guildId, userId, now) {
+  const formerRaw = await getUser(guildId, userId).then( (t) => { return t.ts } );
   const formerTime = dayjs(formerRaw);
   if ((now > formerTime.add(15,'hours') && now < formerTime.endOf('day').add(1, 'day'))) {
     return 1;
@@ -22,22 +22,22 @@ async function checkTime(id, now) {
 }
 
 discord.on('messageCreate', async m => {
-  if (!m.author.bot) {
+  if (!m.author.bot && m.channel.id == '893359071728652308') {
 
-    await loadJSONdb(m.guild.id);
     const config = await getConfig(m.guild.id).then( (c) => { 
       if (c == undefined) { return 0 }
       else { return c }
     });
 
-    const id = m.author.id;
+    const userId = m.author.id;
+    const guildId = m.guildId;
     const username = `${m.author.username}#${m.author.discriminator}`;
 
     if (m.content.indexOf('!gm setup') == 0) {
       if (m.channel.permissionsFor(m.author).has(Permissions.FLAGS.ADMINISTRATOR)) {
         var keyword = m.content.split('!gm setup')[1].trim();
         if (keyword == '') { keyword = 'gm'; }
-        configJSONdb(m.guildId, m.guild.name, m.channel.name, m.channel.id, keyword)
+        insertGuild(guildId, m.guild.name, m.channel.name, m.channel.id, keyword)
         m.reply(`Setup to track ${keyword} in ${m.channel.name}`);
       } else { 
         m.reply('Must be admin to perform setup!');
@@ -45,14 +45,18 @@ discord.on('messageCreate', async m => {
 
     } else if (m.content.toLowerCase() == config.keyword && config.channelId == m.channel.id) {
       const now = dayjs().valueOf();
-      if (await userExist(id) == false) {
-        await initUser(id, username, now).then(await incrUserStreak(id, now));
+      if (await getUser(guildId, userId) == null) {
+        await initUser(guildId, userId, username).then(
+          await incrUserStreak(guildId, userId, now)).then(
+          m.react('1️⃣'));
       } else {
-        const check = await checkTime(id, now);
+        const check = await checkTime(guildId, userId, now);
         if (check == 1) {
-          await incrUserStreak(id, now);
+          await incrUserStreak(guildId, userId, now).then( () => {
+            m.react('✅');
+          });
         } else if (check == -1) {
-          await clearUserStreak(id, now).then(await incrUserStreak(id, now));
+          await clearUserStreak(userId, now).then(await incrUserStreak(userId, now));
         }
       }
 
@@ -62,9 +66,12 @@ discord.on('messageCreate', async m => {
         return m.reply('Do setup with\n```!gm setup```');
       } else {
         const now = dayjs().valueOf();
-        const check = await checkTime(id, now).catch( () => 0);
-        if (check == -1) clearUserStreak(id);
-        const streak = await getUserStreak(id).catch( () => 0 );
+        const check = await checkTime(guildId, userId, now).catch( () => 0);
+        if (check == -1) clearUserStreak(guildId, userId, now);
+        const streak = await getUser(guildId, userId).then( (d) => {
+          if (d == null) { return 0 }
+          else { return d.streak; } 
+        });
         m.reply(`gm ${username}, you have a streak of ${streak}.`);
       }
 
@@ -89,3 +96,6 @@ discord.once('ready', async c => {
 });
 
 discord.login(keys.DISCORD_KEY);
+await mongoConnect().then( () => {
+  log('MongoDB connected');
+});
