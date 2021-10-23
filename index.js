@@ -107,7 +107,7 @@ discord.on('messageCreate', async m => {
         m.reply(`🥇 ${rank[0].username} -> ${rank[0].streak}\n🥈 ${rank[1].username} -> ${rank[1].streak}\n🥉 ${rank[2].username} -> ${rank[2].streak}\n`);
       }
     } else if (m.content == '!gm help') {
-        m.reply(`${config.keyword}\nSay ${config.keyword} to your frens once a day! Miss a day and your streak gets reset :(\nCheck your streak with \`!gm\`\nCheck the top ${config.keyword}'ers with \`!gm rank\`\nLet the ${config.keyword}'ing begin!`);
+        m.reply(`${config.keyword}\nSay ${config.keyword} to your frens once a day! Miss a day and your streak gets reset :(\nI will respond to your ${config.keyword} with number emojis to let you know what your current streak is\nCheck your streak with \`!gm\`\nCheck the top ${config.keyword}'ers with \`!gm rank\`\nLet the ${config.keyword}'ing begin!`);
     }
   }
 });
