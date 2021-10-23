@@ -4,8 +4,3 @@
 
 node_modules/
 
-# dont commit your db!
-/db/*
-
-# but include the a sample db
-!/db/sample.json

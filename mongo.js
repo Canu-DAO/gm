@@ -2,6 +2,7 @@ import { MongoClient } from 'mongodb';
 import { keys } from './keys.js';
 
 let col;
+let JSONdb;
 
 export async function mongoConnect() {
   const uri = `mongodb+srv://jeffrey:${keys.MONGO_USER_PASSWORD}@cluster0.t5lmk.mongodb.net/?retryWrites=true&w=majority`;
@@ -25,19 +26,20 @@ export async function insertGuild(guildId, guildName, channelName, channelId, ke
   col.insertOne(doc);
 }
 
-export async function initUser(guildId, userId, username, ts) {
+export async function initUser(guildId, userId, username) {
   const doc = {
-    'userId': userId,
     'guildId': guildId,
+    'userId': userId,
     'username': username,
     'streak': 0,
-    'ts': ts
+    'ts': 0
   };
   col.insertOne(doc);
+  return 1;
 }
 
 export async function getConfig(guildId) {
-   return await col.findOne({'guildId': guildId});
+   return await col.findOne({'guildId': guildId, 'guildName': { $exists: true }});
 }
 
 export async function getUser(guildId, userId) {
@@ -45,43 +47,21 @@ export async function getUser(guildId, userId) {
 }
 
 export async function getRank(guildId) {
-  // const query = {
-  //   'guildId': { $eq: guildId}
-  // };
-  return await col.find({'guildId': guildId}).sort({'streak': -1}).toArray()
+  return await col.find({'guildId': guildId, 'userId': { $exists: true } }).project(
+    {'_id':0, 'streak':1, 'username': 1}).sort({'streak': -1}).toArray()
 }
 
 export async function incrUserStreak(guildId, userId, ts) {
   await col.updateOne(
     {'guildId': guildId, 'userId': userId},
-    { $inc: { 'streak': 1 }, $set: { 'ts': ts } });
+    { $inc: { 'streak': 1 },
+    $set: { 'ts': ts }});
 }
 
-export async function clearUserStreak(guildId, userId, ts) {
+export async function clearUserStreak(guildId, userId) {
   await col.updateOne(
     {'guildId': guildId, 'userId': userId},
     { $set: 
-      { 'streak': 0, 'ts': ts }
+      { 'streak': 0 }
     });
 }
-
-mongoConnect().then(()=>{
-  //insertGuild('1234567','jiggly','gm','3568357','gm');
-  //initUser('9767865', '1972643786', 'jigglyjams#5647', '1635454667676');
-  // getUser('1234567','45738475834').then( (x) => {
-  //   console.log(x);
-  // });
-  // incrUserStreak('1234567','45738475834', "567").then( (x) => {
-  //   getUser('1234567','45738475834').then( (x) => {
-  //     console.log(x)
-  //     clearUserStreak('1234567','45738475834', "1234").then( (x) => {
-  //       getUser('1234567','45738475834').then( (x) => {
-  //         console.log(x);
-  //       });
-  //     });
-  //   });
-  // });
-  getRank("1234567").then((x)=>{
-    console.log(x);
-  });
-});
