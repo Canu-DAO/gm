@@ -5,6 +5,8 @@ import { mongoConnect, insertGuild, getConfig, initUser, getUser, getRank, incrU
 
 const discord = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS] });
 
+const nummoji = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
+
 function log(text) {
   console.log(`${new Date().toISOString()}\t${text}`);
 }
@@ -19,6 +21,35 @@ async function checkTime(guildId, userId, now) {
   } else {
     return 0;
   }
+}
+
+async function handleUser (guildId, userId, username) {
+  const now = dayjs().valueOf();
+  if (await getUser(guildId, userId) == null) {
+    await initUser(guildId, userId, username).then(
+      await incrUserStreak(guildId, userId, now))
+  } else {
+    const check = await checkTime(guildId, userId, now);
+    if (check == 1) {
+      await incrUserStreak(guildId, userId, now);
+    } else if (check == -1) {
+      await clearUserStreak(guildId, userId).then(await incrUserStreak(guildId, userId, now));
+    }
+  }
+  const currentStreak = await getUser(guildId, userId).then( (u) => { return u.streak });
+  return currentStreak;
+}
+
+function numToEmoji (num) {
+  var emoji = [];
+  const numString = num.toString();
+  const numArray = numString.split('');
+  for (var i = 0; i < numArray.length; i++) {
+    emoji.push(
+      nummoji[numArray[i]]
+    );
+  }
+  return emoji;
 }
 
 discord.on('messageCreate', async m => {
@@ -44,22 +75,12 @@ discord.on('messageCreate', async m => {
       }
 
     } else if (m.content.toLowerCase() == config.keyword && config.channelId == m.channel.id) {
-      const now = dayjs().valueOf();
-      if (await getUser(guildId, userId) == null) {
-        await initUser(guildId, userId, username).then(
-          await incrUserStreak(guildId, userId, now)).then(
-          m.react('1️⃣'));
-      } else {
-        const check = await checkTime(guildId, userId, now);
-        if (check == 1) {
-          await incrUserStreak(guildId, userId, now).then( () => {
-            m.react('✅');
-          });
-        } else if (check == -1) {
-          await clearUserStreak(userId, now).then(await incrUserStreak(userId, now));
+      await handleUser(guildId, userId, username).then( (ret) => {
+        const streakmoji = numToEmoji(ret);
+        for (var i = 0; i < streakmoji.length; i++){
+          m.react(streakmoji[i]);
         }
-      }
-
+      })
       // !commands
     } else if (m.content == '!gm') {
       if (config == 0) { 
@@ -79,11 +100,11 @@ discord.on('messageCreate', async m => {
       if (config == 0) { 
         return m.reply('Do setup with\n```!gm setup```')
       } else {
-        const rank = await getRank();
-        (rank[0] == undefined || rank[0][1] == '0') ? rank[0] = (['no one', 'NA']) : null;
-        (rank[1] == undefined || rank[1][1] == '0') ? rank[1] = (['no one', 'NA']) : null;
-        (rank[2] == undefined || rank[2][1] == '0') ? rank[2] = (['no one', 'NA']) : null;
-        m.reply(`🥇 ${rank[0][0]} -> ${rank[0][1]}\n🥈 ${rank[1][0]} -> ${rank[1][1]}\n🥉 ${rank[2][0]} -> ${rank[2][1]}\n`);
+        const rank = await getRank(guildId);
+        (rank[0] == undefined || rank[0].streak == 0) ? rank[0] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[1] == undefined || rank[1].streak == 0) ? rank[1] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[2] == undefined || rank[2].streak == 0) ? rank[2] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        m.reply(`🥇 ${rank[0].username} -> ${rank[0].streak}\n🥈 ${rank[1].username} -> ${rank[1].streak}\n🥉 ${rank[2].username} -> ${rank[2].streak}\n`);
       }
     } else if (m.content == '!gm help') {
         m.reply(`${config.keyword}\nSay ${config.keyword} to your frens once a day! Miss a day and your streak gets reset :(\nCheck your streak with \`!gm\`\nCheck the top ${config.keyword}'ers with \`!gm rank\`\nLet the ${config.keyword}'ing begin!`);

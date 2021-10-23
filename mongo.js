@@ -2,6 +2,7 @@ import { MongoClient } from 'mongodb';
 import { keys } from './keys.js';
 
 let col;
+let JSONdb;
 
 export async function mongoConnect() {
   const uri = `mongodb+srv://jeffrey:${keys.MONGO_USER_PASSWORD}@cluster0.t5lmk.mongodb.net/?retryWrites=true&w=majority`;
@@ -50,16 +51,17 @@ export async function getRank(guildId) {
     {'_id':0, 'streak':1, 'username': 1}).sort({'streak': -1}).toArray()
 }
 
-export async function incrUserStreak(guildId, userId) {
+export async function incrUserStreak(guildId, userId, ts) {
   await col.updateOne(
     {'guildId': guildId, 'userId': userId},
-    { $inc: { 'streak': 1 }});
+    { $inc: { 'streak': 1 },
+    $set: { 'ts': ts }});
 }
 
-export async function clearUserStreak(guildId, userId, ts) {
+export async function clearUserStreak(guildId, userId) {
   await col.updateOne(
     {'guildId': guildId, 'userId': userId},
     { $set: 
-      { 'streak': 0, 'ts': ts }
+      { 'streak': 0 }
     });
 }
