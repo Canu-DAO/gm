@@ -53,7 +53,7 @@ function numToEmoji (num) {
 }
 
 discord.on('messageCreate', async m => {
-  if (!m.author.bot && m.channel.id == '893359071728652308') {
+  if (!m.author.bot) {
 
     const config = await getConfig(m.guild.id).then( (c) => { 
       if (c == undefined) { return 0 }
