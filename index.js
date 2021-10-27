@@ -14,7 +14,7 @@ function log(text) {
 async function checkTime(guildId, userId, now) {
   const formerRaw = await getUser(guildId, userId).then( (t) => { return t.ts } );
   const formerTime = dayjs(formerRaw);
-  if ((now > formerTime.add(15,'hours') && now < formerTime.endOf('day').add(1, 'day'))) {
+  if ((now >= formerTime.add(15,'hours') && now <= formerTime.endOf('day').add(1, 'day'))) {
     return 1;
   } else if (now > formerTime.endOf('day').add(1, 'day')) {
     return -1;
