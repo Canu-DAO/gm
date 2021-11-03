@@ -104,7 +104,14 @@ discord.on('messageCreate', async m => {
         (rank[0] == undefined || rank[0].streak == 0) ? rank[0] = ({'username': 'no one', 'streak': 'NA'}) : null;
         (rank[1] == undefined || rank[1].streak == 0) ? rank[1] = ({'username': 'no one', 'streak': 'NA'}) : null;
         (rank[2] == undefined || rank[2].streak == 0) ? rank[2] = ({'username': 'no one', 'streak': 'NA'}) : null;
-        m.reply(`🥇 ${rank[0].username} -> ${rank[0].streak}\n🥈 ${rank[1].username} -> ${rank[1].streak}\n🥉 ${rank[2].username} -> ${rank[2].streak}\n`);
+        (rank[3] == undefined || rank[3].streak == 0) ? rank[3] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[4] == undefined || rank[4].streak == 0) ? rank[4] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        m.reply(
+          `🥇 ${rank[0].username} -> ${rank[0].streak}\n
+           🥈 ${rank[1].username} -> ${rank[1].streak}\n
+           🥉 ${rank[2].username} -> ${rank[2].streak}\n
+           4 ${rank[3].username} -> ${rank[3].streak}\n
+           5 ${rank[4].username} -> ${rank[4].streak}`);
       }
     } else if (m.content == '!gm help') {
         m.reply(`${config.keyword}\nSay ${config.keyword} to your frens once a day! Miss a day and your streak gets reset :(\nI will respond to your ${config.keyword} with number emojis to let you know what your current streak is\nCheck your streak with \`!gm\`\nCheck the top ${config.keyword}'ers with \`!gm rank\`\nLet the ${config.keyword}'ing begin!`);
