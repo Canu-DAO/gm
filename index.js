@@ -11,8 +11,8 @@ function log(text) {
   console.log(`${new Date().toISOString()}\t${text}`);
 }
 
-async function checkTime(guildId, userId, now) {
-  const formerRaw = await getUser(guildId, userId).then( (t) => { return t.ts } );
+async function checkTime(userId, now) {
+  const formerRaw = await getUser(userId).then( (t) => { return t.ts } );
   const formerTime = dayjs(formerRaw);
   if ((now >= formerTime.add(15,'hours') && now <= formerTime.endOf('day').add(1, 'day'))) {
     return 1;
@@ -23,21 +23,19 @@ async function checkTime(guildId, userId, now) {
   }
 }
 
-async function handleUser (guildId, userId, username) {
+async function handleUser (userId, username) {
   const now = dayjs().valueOf();
-  if (await getUser(guildId, userId) == null) {
-    await initUser(guildId, userId, username).then(
-      await incrUserStreak(guildId, userId, now))
+  if (await getUser(userId) == null) {
+    await initUser(userId, username).then(
+      await incrUserStreak(userId, now))
   } else {
-    const check = await checkTime(guildId, userId, now);
+    const check = await checkTime(userId, now);
     if (check == 1) {
-      await incrUserStreak(guildId, userId, now);
+      await incrUserStreak(userId, now);
     } else if (check == -1) {
-      await clearUserStreak(guildId, userId).then(await incrUserStreak(guildId, userId, now));
+      await clearUserStreak(userId).then(await incrUserStreak(userId, now));
     }
   }
-  const currentStreak = await getUser(guildId, userId).then( (u) => { return u.streak });
-  return currentStreak;
 }
 
 function numToEmoji (num) {
@@ -68,30 +66,32 @@ discord.on('messageCreate', async m => {
       if (m.channel.permissionsFor(m.author).has(Permissions.FLAGS.ADMINISTRATOR)) {
         var keyword = m.content.split('!gm setup')[1].trim();
         if (keyword == '') { keyword = 'gm'; }
-        insertGuild(guildId, m.guild.name, m.channel.name, m.channel.id, keyword)
+        insertGuild(m.guild.name, m.channel.name, m.channel.id, keyword)
         m.reply(`Setup to track ${keyword} in ${m.channel.name}`);
       } else { 
         m.reply('Must be admin to perform setup!');
       }
 
     } else if (m.content.toLowerCase() == config.keyword && config.channelId == m.channel.id) {
-      await handleUser(guildId, userId, username).then( (ret) => {
-        const streakmoji = numToEmoji(ret);
-        for (var i = 0; i < streakmoji.length; i++){
-          m.react(streakmoji[i]);
-        }
-      })
-      // !commands
+      await handleUser(userId, username).then( () => {
+        getUser(userId).then( (u) => { 
+          const streakmoji = numToEmoji(u.streak); 
+          for (var i = 0; i < streakmoji.length; i++){
+            m.react(streakmoji[i]);
+          }
+        });
+      });
+
     } else if (m.content == '!gm') {
       if (config == 0) { 
         return m.reply('Do setup with\n```!gm setup```');
       } else {
         const now = dayjs().valueOf();
-        const check = await checkTime(guildId, userId, now).catch( () => 0);
-        if (check == -1) clearUserStreak(guildId, userId, now);
-        const streak = await getUser(guildId, userId).then( (d) => {
-          if (d == null) { return 0 }
-          else { return d.streak; } 
+        const check = await checkTime(userId, now).catch( () => 0);
+        if (check == -1) clearUserStreak(userId, now);
+        const streak = await getUser(userId).then( (u) => {
+          if (u == null) { return 0 }
+          else { return u.streak; } 
         });
         m.reply(`gm ${username}, you have a streak of ${streak}.`);
       }
@@ -101,14 +101,20 @@ discord.on('messageCreate', async m => {
         return m.reply('Do setup with\n```!gm setup```')
       } else {
         const rank = await getRank(guildId);
-        (rank[0] == undefined || rank[0].streak == 0) ? rank[0] = ({'username': 'no one', 'streak': 'NA'}) : null;
-        (rank[1] == undefined || rank[1].streak == 0) ? rank[1] = ({'username': 'no one', 'streak': 'NA'}) : null;
-        (rank[2] == undefined || rank[2].streak == 0) ? rank[2] = ({'username': 'no one', 'streak': 'NA'}) : null;
-        (rank[3] == undefined || rank[3].streak == 0) ? rank[3] = ({'username': 'no one', 'streak': 'NA'}) : null;
-        (rank[4] == undefined || rank[4].streak == 0) ? rank[4] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[0] === undefined || rank[0].streak == 0) ? rank[0] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[1] === undefined || rank[1].streak == 0) ? rank[1] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[2] === undefined || rank[2].streak == 0) ? rank[2] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[3] === undefined || rank[3].streak == 0) ? rank[3] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[4] === undefined || rank[4].streak == 0) ? rank[4] = ({'username': 'no one', 'streak': 'NA'}) : null;
         m.reply(
           `🥇 ${rank[0].username} -> ${rank[0].streak}\n🥈 ${rank[1].username} -> ${rank[1].streak}\n🥉 ${rank[2].username} -> ${rank[2].streak}\n4️⃣ ${rank[3].username} -> ${rank[3].streak}\n5️⃣ ${rank[4].username} -> ${rank[4].streak}`);
       }
+    } else if (m.content == '!gm wen') {
+      const formerRaw = await getUser(userId).then( (t) => { return t.ts } );
+      const formerTime = dayjs(formerRaw);
+      const lower = formerTime.add(15,'hours');
+      const upper = formerTime.endOf('day').add(1, 'day');
+      m.reply(`You previously said ${config.keyword} at <t:${formerTime.unix()}>. Say it again after <t:${lower.unix()}> but before <t:${upper.unix()}>`);
     } else if (m.content == '!gm help') {
         m.reply(`${config.keyword}\nSay ${config.keyword} to your frens once a day! Miss a day and your streak gets reset :(\nI will respond to your ${config.keyword} with number emojis to let you know what your current streak is\nCheck your streak with \`!gm\`\nCheck the top ${config.keyword}'ers with \`!gm rank\`\nLet the ${config.keyword}'ing begin!`);
     }

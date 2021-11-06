@@ -2,22 +2,20 @@ import { MongoClient } from 'mongodb';
 import { keys } from './keys.js';
 
 let col;
-let JSONdb;
+let client;
 
 export async function mongoConnect() {
   const uri = `mongodb+srv://jeffrey:${keys.MONGO_USER_PASSWORD}@cluster0.t5lmk.mongodb.net/?retryWrites=true&w=majority`;
-  const client = new MongoClient(uri);
+  client = new MongoClient(uri);
   try{ 
     await client.connect();
-    col = client.db('gm').collection('streaks');
   } catch (e) {
     console.log('ERROR: failed to connect to db');
   }
 }
 
-export async function insertGuild(guildId, guildName, channelName, channelId, keyword) {
+export async function insertGuild(guildName, channelName, channelId, keyword) {
   const doc = {
-    'guildId': guildId,
     'guildName': guildName,
     'channelName': channelName,
     'channelId': channelId,
@@ -26,41 +24,44 @@ export async function insertGuild(guildId, guildName, channelName, channelId, ke
   col.insertOne(doc);
 }
 
-export async function initUser(guildId, userId, username) {
+export async function initUser(userId, username) {
   const doc = {
-    'guildId': guildId,
     'userId': userId,
     'username': username,
     'streak': 0,
-    'ts': 0
+    'ts': 0,
+    history: []
   };
   col.insertOne(doc);
   return 1;
 }
 
 export async function getConfig(guildId) {
-   return await col.findOne({'guildId': guildId, 'guildName': { $exists: true }});
+  process.env.NODE_ENV === 'dev' ? guildId = guildId + '-dev' : null;
+  col = client.db('gm').collection(`${guildId}`);
+  return await col.findOne({'channelId': { $exists: true }});
 }
 
-export async function getUser(guildId, userId) {
-  return await col.findOne({'guildId': guildId, 'userId': userId});
+export async function getUser(userId) {
+  return await col.findOne({'userId': userId});
 }
 
-export async function getRank(guildId) {
-  return await col.find({'guildId': guildId, 'userId': { $exists: true } }).project(
+export async function getRank() {
+  return await col.find({'userId': { $exists: true }, 'username': { $exists: true } }).project(
     {'_id':0, 'streak':1, 'username': 1}).sort({'streak': -1}).toArray()
 }
 
-export async function incrUserStreak(guildId, userId, ts) {
+export async function incrUserStreak(userId, ts) {
   await col.updateOne(
-    {'guildId': guildId, 'userId': userId},
+    {'userId': userId},
     { $inc: { 'streak': 1 },
-    $set: { 'ts': ts }});
+    $set: { 'ts': ts },
+    $push: { 'history': ts }});
 }
 
-export async function clearUserStreak(guildId, userId) {
+export async function clearUserStreak(userId) {
   await col.updateOne(
-    {'guildId': guildId, 'userId': userId},
+    {'userId': userId},
     { $set: 
       { 'streak': 0 }
     });

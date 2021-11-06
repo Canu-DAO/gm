@@ -1,7 +1,8 @@
 {
   "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "export NODE_ENV='prod' && node index.js",
+    "dev": "export NODE_ENV='dev' && node index.js"
   },
   "dependencies": {
     "dayjs": "^1.10.7",
