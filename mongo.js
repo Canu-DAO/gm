@@ -56,7 +56,9 @@ export async function incrUserStreak(userId, ts) {
     {'userId': userId},
     { $inc: { 'streak': 1 },
     $set: { 'ts': ts },
-    $push: { 'history': ts }});
+    $push: { 'history': ts }}).then( (r) => {
+      return (r.ackowledged === true) ? 1 : -1;
+    });
 }
 
 export async function clearUserStreak(userId) {

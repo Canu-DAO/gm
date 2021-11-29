@@ -27,13 +27,18 @@ async function handleUser (userId, username) {
   const now = dayjs().valueOf();
   if (await getUser(userId) == null) {
     await initUser(userId, username).then(
-      await incrUserStreak(userId, now))
+      await incrUserStreak(userId, now));
+      return 1;
   } else {
     const check = await checkTime(userId, now);
     if (check == 1) {
       await incrUserStreak(userId, now);
+      return 1;
     } else if (check == -1) {
       await clearUserStreak(userId).then(await incrUserStreak(userId, now));
+      return -1;
+    } else {
+      return 0;
     }
   }
 }
@@ -73,13 +78,17 @@ discord.on('messageCreate', async m => {
       }
 
     } else if (m.content.toLowerCase() == config.keyword && config.channelId == m.channel.id) {
-      await handleUser(userId, username).then( () => {
-        getUser(userId).then( (u) => { 
-          const streakmoji = numToEmoji(u.streak); 
-          for (var i = 0; i < streakmoji.length; i++){
-            m.react(streakmoji[i]);
-          }
-        });
+      await handleUser(userId, username).then( (r) => {
+        if (r === 0) {
+          m.react('⏰');
+        } else {
+          getUser(userId).then( (u) => { 
+            const streakmoji = numToEmoji(u.streak); 
+            for (var i = 0; i < streakmoji.length; i++){
+              m.react(streakmoji[i]);
+            }
+          });
+        }
       });
 
     } else if (m.content == '!gm') {
