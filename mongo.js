@@ -46,8 +46,8 @@ export async function getUser(userId) {
   return await col.findOne({'userId': userId});
 }
 
-export async function getRank() {
-  return await col.find({'userId': { $exists: true }, 'username': { $exists: true } }).project(
+export async function getRank(cutoff) {
+  return await col.find({'userId': { $exists: true }, 'username': { $exists: true }, 'ts': { $gt: cutoff} }).project(
     {'_id':0, 'streak':1, 'username': 1}).sort({'streak': -1}).toArray()
 }
 

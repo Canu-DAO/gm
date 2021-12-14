@@ -109,7 +109,8 @@ discord.on('messageCreate', async m => {
       if (config == 0) { 
         return m.reply('Do setup with\n```!gm setup```')
       } else {
-        const rank = await getRank(guildId);
+        const cutoff = dayjs().subtract(1,'day').valueOf();
+        const rank = await getRank(cutoff);
         (rank[0] === undefined || rank[0].streak == 0) ? rank[0] = ({'username': 'no one', 'streak': 'NA'}) : null;
         (rank[1] === undefined || rank[1].streak == 0) ? rank[1] = ({'username': 'no one', 'streak': 'NA'}) : null;
         (rank[2] === undefined || rank[2].streak == 0) ? rank[2] = ({'username': 'no one', 'streak': 'NA'}) : null;
