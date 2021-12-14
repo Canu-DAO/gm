@@ -1,15 +1,12 @@
 import { Client, Intents, Permissions } from 'discord.js';
 import dayjs from 'dayjs';
 import { keys } from './keys.js';
+import { sleep, log } from './utils.js';
 import { mongoConnect, insertGuild, getConfig, initUser, getUser, getRank, incrUserStreak, clearUserStreak } from './mongo.js';
 
 const discord = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS] });
 
 const nummoji = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
-
-function log(text) {
-  console.log(`${new Date().toISOString()}\t${text}`);
-}
 
 async function checkTime(userId, now) {
   const formerRaw = await getUser(userId).then( (t) => { return t.ts } );
@@ -98,12 +95,25 @@ discord.on('messageCreate', async m => {
         const now = dayjs().valueOf();
         const check = await checkTime(userId, now).catch( () => 0);
         if (check == -1) clearUserStreak(userId, now);
-        const streak = await getUser(userId).then( (u) => {
+        const user = await getUser(userId).then( (u) => {
           if (u == null) { return 0 }
-          else { return u.streak; } 
+          else { return u; } 
         });
-        m.reply(`gm ${username}, you have a streak of ${streak}.`);
+        m.reply(`gm ${username}, you have a streak of ${user.streak} and overall have said ${config.keyword} ${user.history.length} times`);
       }
+
+    } else if (m.content === '!gm avg') {
+      const avg = await getUser(userId).then( (t) => { 
+        const history = t.history;
+        const length = history.length;
+        let ret = 0;
+        history.forEach(h => {
+          const i = dayjs(parseInt(h)).format('HH');
+          ret = ret + parseInt(i);
+        })
+        return ret/length;
+      });
+      m.reply(`You usually say ${config.keyword} around ${Math.round(avg)}:00`);
 
     } else if (m.content == '!gm rank') {
       if (config == 0) { 
@@ -119,6 +129,7 @@ discord.on('messageCreate', async m => {
         m.reply(
           `🥇 ${rank[0].username} -> ${rank[0].streak}\n🥈 ${rank[1].username} -> ${rank[1].streak}\n🥉 ${rank[2].username} -> ${rank[2].streak}\n4️⃣ ${rank[3].username} -> ${rank[3].streak}\n5️⃣ ${rank[4].username} -> ${rank[4].streak}`);
       }
+
     } else if (m.content == '!gm wen') {
       const formerRaw = await getUser(userId).then( (t) => { return t.ts } );
       const formerTime = dayjs(formerRaw);
@@ -136,6 +147,12 @@ discord.once('ready', async c => {
 });
 
 discord.login(keys.DISCORD_KEY);
-await mongoConnect().then( () => {
-  log('MongoDB connected');
+await mongoConnect().then( (r) => {
+  if (r === 1) { 
+    log('MongoDB connected'); 
+    return;
+  } else {
+    log('Error connecting.');
+    process.exit();
+  }
 });

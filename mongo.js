@@ -7,10 +7,12 @@ let client;
 export async function mongoConnect() {
   const uri = `mongodb+srv://jeffrey:${keys.MONGO_USER_PASSWORD}@cluster0.t5lmk.mongodb.net/?retryWrites=true&w=majority`;
   client = new MongoClient(uri);
-  try{ 
+  try { 
     await client.connect();
+    return 1;
   } catch (e) {
-    console.log('ERROR: failed to connect to db');
+    await client.close();
+    return -1;
   }
 }
 
