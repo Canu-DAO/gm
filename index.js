@@ -62,6 +62,7 @@ discord.on('messageCreate', async m => {
 
     const userId = m.author.id;
     const guildId = m.guildId;
+    console.log(guildId);
     const username = `${m.author.username}#${m.author.discriminator}`;
 
     if (m.content.indexOf('!gm setup') == 0) {
