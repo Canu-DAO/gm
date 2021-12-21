@@ -140,7 +140,7 @@ discord.on('messageCreate', async m => {
         const message = new MessageEmbed()
           .setTitle('👋')
           .setDescription(`\
-            thanks or adding me!\nmy purpose is to count your ${config.keyword}'s\n\
+            thanks for adding me!\nmy purpose is to count your ${config.keyword}'s\n\
             say ${config.keyword} once a day to increment your streak\nmiss a day and your streak gets reset :(\n\
             when you have successfully ${config.keyword}'ed you'll see reaction emojis with your current streak\n`)
           .addField('other commands',"\
@@ -149,7 +149,7 @@ discord.on('messageCreate', async m => {
             `!gm rank` displays the current streak leader board\n\
             `!gm setup` setups me up to track in the channel where it is sent\n\
             ")
-          .addField('________________________','gm')
+          .addField('〰','gm')
           .addField('brought to you by', '[CanuDAO](https://discord.gg/dv7SXUaMKD)');
         m.reply({embeds:[message]});
         //m.reply(`${config.keyword}\nSay ${config.keyword} to your frens once a day! Miss a day and your streak gets reset :(\nI will respond to your ${config.keyword} with number emojis to let you know what your current streak is\nCheck your streak with \`!gm\`\nCheck the top ${config.keyword}'ers with \`!gm rank\`\nLet the ${config.keyword}'ing begin!`);
