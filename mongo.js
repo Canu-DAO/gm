@@ -23,7 +23,7 @@ export async function insertGuild(guildName, channelName, channelId, keyword) {
     'channelId': channelId,
     'keyword': keyword
   };
-  col.insertOne(doc);
+  await col.insertOne(doc);
 }
 
 export async function initUser(userId, username) {
@@ -34,7 +34,7 @@ export async function initUser(userId, username) {
     'ts': 0,
     history: []
   };
-  col.insertOne(doc);
+  await col.insertOne(doc);
   return 1;
 }
 
