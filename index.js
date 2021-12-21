@@ -24,8 +24,9 @@ async function handleUser (userId, username) {
   const now = dayjs().valueOf();
   if (await getUser(userId) == null) {
     await initUser(userId, username).then(
-      await incrUserStreak(userId, now));
-      return 1;
+      await incrUserStreak(userId, now).then( () => {
+        return 1;
+      }));
   } else {
     const check = await checkTime(userId, now);
     if (check == 1) {
