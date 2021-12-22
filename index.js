@@ -22,17 +22,19 @@ async function checkTime(userId, now) {
 
 async function handleUser (userId, username) {
   const now = dayjs().valueOf();
-  if (await getUser(userId) == null) {
+  if (await getUser(userId) === null) {
     await initUser(userId, username).then(
       await incrUserStreak(userId, now).then( () => {
         return 1;
       }));
   } else {
     const check = await checkTime(userId, now);
-    if (check == 1) {
-      await incrUserStreak(userId, now);
-      return 1;
-    } else if (check == -1) {
+    if (check === 1) {
+      await incrUserStreak(userId, now).then( ()=>{
+        return -1;
+      });
+      ;
+    } else if (check === -1) {
       await clearUserStreak(userId).then(await incrUserStreak(userId, now));
       return -1;
     } else {
@@ -57,17 +59,17 @@ discord.on('messageCreate', async m => {
   if (!m.author.bot) {
     const botHasPermish = m.channel.permissionsFor(m.guild.me).has(Permissions.FLAGS.READ_MESSAGE_HISTORY);
     const config = await getConfig(m.guild.id).then( (c) => { 
-      if (c == undefined) { return 0 }
+      if (c === undefined) { return 0 }
       else { return c }
     });
 
     const userId = m.author.id;
     const username = m.author.tag;
 
-    if (m.content.indexOf('!gm setup') == 0) {
+    if (m.content.indexOf('!gm setup') === 0) {
       if (m.channel.permissionsFor(m.author).has(Permissions.FLAGS.ADMINISTRATOR)) {
         var keyword = m.content.split('!gm setup')[1].trim();
-        if (keyword == '') { keyword = 'gm'; }
+        if (keyword === '') { keyword = 'gm'; }
         insertGuild(m.guild.name, m.channel.name, m.channel.id, keyword)
         discord.channels.cache.get(m.channelId).send(`Setup to track ${keyword} in ${m.channel.name}`);
       } else { 
@@ -96,15 +98,15 @@ discord.on('messageCreate', async m => {
         }
       });
 
-    } else if (m.content == '!gm') {
-      if (config == 0) { 
+    } else if (m.content === '!gm') {
+      if (config === 0) { 
         return discord.channels.cache.get(m.channelId).send('Do setup with\n```!gm setup```');
       } else {
         const now = dayjs().valueOf();
         const check = await checkTime(userId, now).catch( () => 0);
-        if (check == -1) clearUserStreak(userId, now);
+        if (check === -1) clearUserStreak(userId, now);
         const user = await getUser(userId).then( (u) => {
-          if (u == null) { return 0 }
+          if (u === null) { return 0 }
           else { return u; } 
         });
         discord.channels.cache.get(m.channelId).send(`gm ${m.author}, you have a streak of ${user.streak} and overall have said ${config.keyword} ${user.history.length} times`);
@@ -123,28 +125,28 @@ discord.on('messageCreate', async m => {
       });
       discord.channels.cache.get(m.channelId).send(`You usually say ${config.keyword} around ${Math.round(avg)}:00`);
 
-    } else if (m.content == '!gm rank') {
-      if (config == 0) { 
+    } else if (m.content === '!gm rank') {
+      if (config === 0) { 
         return discord.channels.cache.get(m.channelId).send('Do setup with\n```!gm setup```')
       } else {
         const cutoff = dayjs().subtract(1,'day').valueOf();
         const rank = await getRank(cutoff);
-        (rank[0] === undefined || rank[0].streak == 0) ? rank[0] = ({'username': 'no one', 'streak': 'NA'}) : null;
-        (rank[1] === undefined || rank[1].streak == 0) ? rank[1] = ({'username': 'no one', 'streak': 'NA'}) : null;
-        (rank[2] === undefined || rank[2].streak == 0) ? rank[2] = ({'username': 'no one', 'streak': 'NA'}) : null;
-        (rank[3] === undefined || rank[3].streak == 0) ? rank[3] = ({'username': 'no one', 'streak': 'NA'}) : null;
-        (rank[4] === undefined || rank[4].streak == 0) ? rank[4] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[0] === undefined || rank[0].streak === 0) ? rank[0] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[1] === undefined || rank[1].streak === 0) ? rank[1] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[2] === undefined || rank[2].streak === 0) ? rank[2] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[3] === undefined || rank[3].streak === 0) ? rank[3] = ({'username': 'no one', 'streak': 'NA'}) : null;
+        (rank[4] === undefined || rank[4].streak === 0) ? rank[4] = ({'username': 'no one', 'streak': 'NA'}) : null;
         discord.channels.cache.get(m.channelId).send(
           `🥇 ${rank[0].username} -> ${rank[0].streak}\n🥈 ${rank[1].username} -> ${rank[1].streak}\n🥉 ${rank[2].username} -> ${rank[2].streak}\n4️⃣ ${rank[3].username} -> ${rank[3].streak}\n5️⃣ ${rank[4].username} -> ${rank[4].streak}`);
       }
 
-    } else if (m.content == '!gm wen') {
+    } else if (m.content === '!gm wen') {
       const formerRaw = await getUser(userId).then( (t) => { return t.ts } );
       const formerTime = dayjs(formerRaw);
       const lower = formerTime.add(15,'hours');
       const upper = formerTime.endOf('day').add(1, 'day');
       discord.channels.cache.get(m.channelId).send(`You previously said ${config.keyword} at <t:${formerTime.unix()}>. Say it again after <t:${lower.unix()}> but before <t:${upper.unix()}>`);
-    } else if (m.content == '!gm help') {
+    } else if (m.content === '!gm help') {
         const message = new MessageEmbed()
           .setTitle('👋')
           .setDescription(`thanks for adding me!\nmy purpose is to count your gm's\nsay gm once a day to increment your streak\nmiss a day and your streak gets reset :(\nwhen you have successfully gm'ed you'll see reaction emojis with your current streak\nif you haven't waited long enough since your last gm you'll see a ⏰ reaction`)
