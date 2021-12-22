@@ -59,7 +59,7 @@ discord.on('messageCreate', async m => {
   if (!m.author.bot) {
     const botHasPermish = m.channel.permissionsFor(m.guild.me).has(Permissions.FLAGS.READ_MESSAGE_HISTORY);
     const config = await getConfig(m.guild.id).then( (c) => { 
-      if (c === undefined) { return 0 }
+      if (c == undefined) { return 0 }
       else { return c }
     });
 
@@ -134,11 +134,11 @@ discord.on('messageCreate', async m => {
         } else if (m.content === '!gm rank') {
             const cutoff = dayjs().subtract(1,'day').valueOf();
             const rank = await getRank(cutoff);
-            (rank[0] === undefined || rank[0].streak === 0) ? rank[0] = ({'username': 'no one', 'streak': 'NA'}) : null;
-            (rank[1] === undefined || rank[1].streak === 0) ? rank[1] = ({'username': 'no one', 'streak': 'NA'}) : null;
-            (rank[2] === undefined || rank[2].streak === 0) ? rank[2] = ({'username': 'no one', 'streak': 'NA'}) : null;
-            (rank[3] === undefined || rank[3].streak === 0) ? rank[3] = ({'username': 'no one', 'streak': 'NA'}) : null;
-            (rank[4] === undefined || rank[4].streak === 0) ? rank[4] = ({'username': 'no one', 'streak': 'NA'}) : null;
+            (rank[0] == undefined || rank[0].streak === 0) ? rank[0] = ({'username': 'no one', 'streak': 'NA'}) : null;
+            (rank[1] == undefined || rank[1].streak === 0) ? rank[1] = ({'username': 'no one', 'streak': 'NA'}) : null;
+            (rank[2] == undefined || rank[2].streak === 0) ? rank[2] = ({'username': 'no one', 'streak': 'NA'}) : null;
+            (rank[3] == undefined || rank[3].streak === 0) ? rank[3] = ({'username': 'no one', 'streak': 'NA'}) : null;
+            (rank[4] == undefined || rank[4].streak === 0) ? rank[4] = ({'username': 'no one', 'streak': 'NA'}) : null;
             discord.channels.cache.get(m.channelId).send(
               `🥇 ${rank[0].username} -> ${rank[0].streak}\n🥈 ${rank[1].username} -> ${rank[1].streak}\n🥉 ${rank[2].username} -> ${rank[2].streak}\n4️⃣ ${rank[3].username} -> ${rank[3].streak}\n5️⃣ ${rank[4].username} -> ${rank[4].streak}`);
 
