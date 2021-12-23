@@ -20,7 +20,7 @@ npm start
 
 Add bot to your Discord server using the invite link below:
 
-https://discord.com/api/oauth2/authorize?client_id=893356893865644083&permissions=3136&scope=bot
+https://discord.com/api/oauth2/authorize?client_id=893356893865644083&permissions=68672&scope=bot
 
 ## Commands
 
