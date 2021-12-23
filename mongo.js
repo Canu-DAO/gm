@@ -26,13 +26,13 @@ export async function insertGuild(guildName, channelName, channelId, keyword) {
   await col.insertOne(doc);
 }
 
-export async function initUser(userId, username) {
+export async function initUser(userId, username, ts) {
   const doc = {
     'userId': userId,
     'username': username,
-    'streak': 0,
-    'ts': 0,
-    history: []
+    'streak': 1,
+    'ts': ts,
+    history: [ts]
   };
   await col.insertOne(doc);
   return 1;
@@ -63,7 +63,15 @@ export async function incrUserStreak(userId, ts) {
     });
 }
 
-export async function clearUserStreak(userId) {
+export async function clearUserStreak(userId, ts) {
+  await col.updateOne(
+    {'userId': userId},
+    { $set: 
+      { 'streak': 1, 'ts': ts }
+    });
+}
+
+export async function zeroUserStreak(userId) {
   await col.updateOne(
     {'userId': userId},
     { $set: 

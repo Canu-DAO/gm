@@ -2,11 +2,13 @@ import { Client, Intents, Permissions, MessageEmbed } from 'discord.js';
 import dayjs from 'dayjs';
 import { keys } from './keys.js';
 import { sleep, log } from './utils.js';
-import { mongoConnect, insertGuild, getConfig, initUser, getUser, getRank, incrUserStreak, clearUserStreak } from './mongo.js';
+import { mongoConnect, insertGuild, getConfig, initUser, getUser, getRank, incrUserStreak, clearUserStreak, zeroUserStreak } from './mongo.js';
 
 const discord = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS] });
 
 const nummoji = ['0️⃣', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣'];
+
+const commands = ['!gm', '!gm wen', '!gm rank'];
 
 async function checkTime(userId, now) {
   const formerRaw = await getUser(userId).then( (t) => { return t.ts } );
@@ -23,20 +25,20 @@ async function checkTime(userId, now) {
 async function handleUser (userId, username) {
   const now = dayjs().valueOf();
   if (await getUser(userId) === null) {
-    await initUser(userId, username).then(
-      await incrUserStreak(userId, now).then( () => {
-        return 1;
-      }));
+    initUser(userId, username, now).then( () => {
+      return 1;
+    });
   } else {
     const check = await checkTime(userId, now);
     if (check === 1) {
-      await incrUserStreak(userId, now).then( ()=>{
-        return -1;
+      await incrUserStreak(userId, now).then( () => {
+        return 1;
       });
       ;
     } else if (check === -1) {
-      await clearUserStreak(userId).then(await incrUserStreak(userId, now));
-      return -1;
+      await clearUserStreak(userId, now).then( () => {
+        return -1;
+      });
     } else {
       return 0;
     }
@@ -84,39 +86,47 @@ discord.on('messageCreate', async m => {
         .addField('===========================','gm')
         .addField('brought to you by', '[CanuDAO](https://discord.gg/dv7SXUaMKD)');
       discord.channels.cache.get(m.channelId).send({embeds:[message]});
-      //m.reply(`${config.keyword}\nSay ${config.keyword} to your frens once a day! Miss a day and your streak gets reset :(\nI will respond to your ${config.keyword} with number emojis to let you know what your current streak is\nCheck your streak with \`!gm\`\nCheck the top ${config.keyword}'ers with \`!gm rank\`\nLet the ${config.keyword}'ing begin!`);
+    
     } else if (config !== 0) {
         if (m.content.toLowerCase() === config.keyword && config.channelId === m.channel.id) {
           await handleUser(userId, username).then( (r) => {
-            if (r === 0) {
-              if (botHasPermish){
-                m.react('⏰');
-              } else {
-                discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
-              }
-            } else {
-              getUser(userId).then( (u) => { 
-                const streakmoji = numToEmoji(u.streak); 
-                for (var i = 0; i < streakmoji.length; i++){
-                  if (botHasPermish){
-                    m.react(streakmoji[i]);
-                  } else {
-                    discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
-                  }
+            try {
+              if (r === 0) {
+                if (botHasPermish){
+                  m.react('⏰');
+                } else {
+                  discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
                 }
-              });
+              } else {
+                getUser(userId).then( (u) => { 
+                  const streakmoji = numToEmoji(u.streak); 
+                  for (var i = 0; i < streakmoji.length; i++){
+                    if (botHasPermish){
+                      m.react(streakmoji[i]);
+                    } else {
+                      discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
+                    }
+                  }
+                });
+              }
+            } catch(e) {
+              log(`issue in ${m.guild.name}, ${m.channel.name}`);
             }
           });
 
         } else if (m.content === '!gm') {
           const now = dayjs().valueOf();
           const check = await checkTime(userId, now).catch( () => 0);
-          if (check === -1) clearUserStreak(userId, now);
+          if (check === -1) zeroUserStreak(userId);
           const user = await getUser(userId).then( (u) => {
             if (u === null) { return 0 }
             else { return u; } 
           });
-          discord.channels.cache.get(m.channelId).send(`gm ${m.author}, you have a streak of ${user.streak} and overall have said ${config.keyword} ${user.history.length} times`);
+          if (user === 0) {
+            discord.channels.cache.get(m.channelId).send(`gm ${m.author}, you've never said gm, give it a try!`);
+          } else {
+            discord.channels.cache.get(m.channelId).send(`gm ${m.author}, you have a streak of ${user.streak} and overall have said ${config.keyword} ${user.history.length} times`);
+          }
 
         } else if (m.content === '!gm avg') {
           const avg = await getUser(userId).then( (t) => { 
@@ -150,7 +160,9 @@ discord.on('messageCreate', async m => {
           discord.channels.cache.get(m.channelId).send(`You previously said ${config.keyword} at <t:${formerTime.unix()}>. Say it again after <t:${lower.unix()}> but before <t:${upper.unix()}>`);
         }
     } else {
-        return discord.channels.cache.get(m.channelId).send('Do setup with\n```!gm setup```')
+        if (commands.indexOf(m.content) > -1) {
+          return discord.channels.cache.get(m.channelId).send('Do setup with\n```!gm setup```')
+        }
     }
   }
 });
