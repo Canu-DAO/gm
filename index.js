@@ -25,18 +25,17 @@ async function checkTime(userId, now) {
 async function handleUser (userId, username) {
   const now = dayjs().valueOf();
   if (await getUser(userId) === null) {
-    initUser(userId, username, now).then( () => {
+    return await initUser(userId, username, now).then( () => {
       return 1;
     });
   } else {
     const check = await checkTime(userId, now);
     if (check === 1) {
-      await incrUserStreak(userId, now).then( () => {
-        return 1;
+      return await incrUserStreak(userId, now).then( (user) => {
+        return user.streak;
       });
-      ;
     } else if (check === -1) {
-      await clearUserStreak(userId, now).then( () => {
+      return await clearUserStreak(userId, now).then( () => {
         return -1;
       });
     } else {
@@ -89,28 +88,27 @@ discord.on('messageCreate', async m => {
     
     } else if (config !== 0) {
         if (m.content.toLowerCase() === config.keyword && config.channelId === m.channel.id) {
-          await handleUser(userId, username).then( (r) => {
+          await handleUser(userId, username).then( (streak) => {
             try {
-              if (r === 0) {
+              if (streak === 0) {
                 if (botHasPermish){
                   m.react('⏰');
                 } else {
                   discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
                 }
               } else {
-                getUser(userId).then( (u) => { 
-                  const streakmoji = numToEmoji(u.streak); 
-                  for (var i = 0; i < streakmoji.length; i++){
-                    if (botHasPermish){
-                      m.react(streakmoji[i]);
-                    } else {
-                      discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
-                    }
+                const streakmoji = numToEmoji(streak); 
+                for (var i = 0; i < streakmoji.length; i++){
+                  if (botHasPermish){
+                    m.react(streakmoji[i]);
+                  } else {
+                    discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
                   }
-                });
+                }
               }
             } catch(e) {
-              log(`issue in ${m.guild.name}, ${m.channel.name}`);
+              log(`issue in ${m.guild.name}, ${m.channel.name}, ${username}`);
+              log(e);
             }
           });
 

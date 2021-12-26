@@ -54,12 +54,14 @@ export async function getRank(cutoff) {
 }
 
 export async function incrUserStreak(userId, ts) {
-  await col.updateOne(
+  const options = { returnNewDocument: true, returnDocument: 'after' };
+  return await col.findOneAndUpdate(
     {'userId': userId},
     { $inc: { 'streak': 1 },
     $set: { 'ts': ts },
-    $push: { 'history': ts }}).then( (r) => {
-      return (r.ackowledged === true) ? 1 : -1;
+    $push: { 'history': ts }},
+    options).then( (r) => {
+      return r.value;
     });
 }
 
