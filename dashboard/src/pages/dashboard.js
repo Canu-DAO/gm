@@ -1,9 +1,11 @@
 import {
-  Link as ChakraLink,
   Center,
   VStack,
+  Link as ChakraLink,
   Heading,
-  Container
+  Container,
+  Spinner,
+  Button
 } from '@chakra-ui/react'
 import {
   Table,
@@ -21,11 +23,11 @@ import { Footer } from '../components/Footer'
 import { mongoConnect } from '../lib/mongo';
 
 export default function Dashboard({ guilds }) { 
-
   return(
     <Container>
+      <ChakraLink href="../"><Button w={75} mt={10} ml={-10}>back</Button></ChakraLink>
       <Main>
-      <Center pt={50}>
+      <Center pt={10}>
         <VStack spacing={8} justifyContent="center" alignItems="center">
           <Heading fontSize="3em" color="gray">
             dashboard
@@ -36,27 +38,26 @@ export default function Dashboard({ guilds }) {
               <Th>server name</Th>
               <Th>total gm's</Th>
             </Tr>
-          </Thead>
-          <Tbody>
-            { guilds.map((guild) => (
-              <Tr>
-                <Td>{ guild.name }</Td>
-                <Td>{ guild.total }</Td>
-              </Tr>
-            ))}
-          </Tbody>
-        </Table>
+            </Thead>
+            <Tbody>
+              { guilds.map((guild) => (
+                <Tr>
+                  <Td>{ guild.name }</Td>
+                  <Td>{ guild.total }</Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
         </VStack>
       </Center>
       </Main>
       <DarkModeSwitch />
-      <Footer>
-      </Footer>
+      <Footer />
     </Container>
   )
 }
 
-export async function getServerSideProps(context) {
+export async function getServerSideProps() {
   try {
     const client = await mongoConnect();
     const collections = await client.db('gm').listCollections().toArray();

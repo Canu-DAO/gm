@@ -13,8 +13,8 @@ import { Footer } from '../components/Footer'
 const Index = () => (
   <Container>
     <Main>
-    <VStack spacing={8} justifyContent="center" alignItems="center">
-      <Heading fontSize="10vw" color="gray">
+    <VStack spacing={5} justifyContent="center" alignItems="center">
+      <Heading fontSize="8vw" color="gray">
         gm bot
       </Heading>
       <Text fontSize="10vw">☀️</Text>
@@ -24,8 +24,7 @@ const Index = () => (
     </Main>
 
     <DarkModeSwitch />
-    <Footer>
-    </Footer>
+    <Footer />
   </Container>
 )
 
