@@ -88,31 +88,25 @@ discord.on('messageCreate', async m => {
     
     } else if (config !== 0) {
         if (m.content.toLowerCase() === config.keyword && config.channelId === m.channel.id) {
-          await handleUser(userId, username).then( (streak) => {
-            try {
-              if (streak === 0) {
-                if (botHasPermish){
-                  m.react('⏰');
-                } else {
-                  log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`);
-                  discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
-                }
-              } else {
-                const streakmoji = numToEmoji(streak); 
-                for (var i = 0; i < streakmoji.length; i++){
-                  if (botHasPermish){
-                    m.react(streakmoji[i]);
-                  } else {
-                    log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`);
-                    discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
-                  }
-                }
-              }
-            } catch(e) {
-              log(`issue in ${m.guild.name}, ${m.channel.name}, ${username}`);
-              log(e);
+          const streak = await handleUser(userId, username);
+          if (streak === 0) {
+            if (botHasPermish){
+              try { await m.react('⏰'); } catch(e) { log(`ERROR: clock reaction ${m.guild.name}, ${m.channel.name}`, 'e'); log(e, 'e') }
+            } else {
+              log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`);
+              await discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
             }
-          });
+          } else {
+            const streakmoji = numToEmoji(streak); 
+            for (var i = 0; i < streakmoji.length; i++){
+              if (botHasPermish){
+                try { m.react(streakmoji[i]); } catch(e) { log(`ERROR: nummoji reaction ${m.guild.name}, ${m.channel.name}`, 'e'); log(e, 'e') }
+              } else {
+                log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`);
+                await discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
+              }
+            }
+          }
 
         } else if (m.content === '!gm') {
           const now = dayjs().valueOf();
