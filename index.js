@@ -140,7 +140,7 @@ discord.on('messageCreate', async m => {
           discord.channels.cache.get(m.channelId).send(`You usually say ${config.keyword} around ${Math.round(avg)}:00`);
 
         } else if (m.content === '!gm rank') {
-            const cutoff = dayjs().subtract(1,'day').valueOf();
+            const cutoff = dayjs().subtract(2,'day').valueOf();
             const rank = await getRank(cutoff);
             (rank[0] == undefined || rank[0].streak === 0) ? rank[0] = ({'username': 'no one', 'streak': 'NA'}) : null;
             (rank[1] == undefined || rank[1].streak === 0) ? rank[1] = ({'username': 'no one', 'streak': 'NA'}) : null;
