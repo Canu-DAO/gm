@@ -71,10 +71,11 @@ discord.on('messageCreate', async m => {
       if (m.channel.permissionsFor(m.author).has(Permissions.FLAGS.ADMINISTRATOR)) {
         var keyword = m.content.split('!gm setup')[1].trim();
         if (keyword === '') { keyword = 'gm'; }
-        insertGuild(m.guild.name, m.channel.name, m.channel.id, keyword)
-        discord.channels.cache.get(m.channelId).send(`Setup to track ${keyword} in ${m.channel.name}`);
+        await insertGuild(m.guild.name, m.channel.name, m.channel.id, keyword);
+        log(`New guild added! ${m.guild.name}, ${m.channel.name}, word: ${keyword}`, 'g');
+        await discord.channels.cache.get(m.channelId).send(`Setup to track ${keyword} in ${m.channel.name}`);
       } else { 
-        discord.channels.cache.get(m.channelId).send('Must be admin to perform setup!');
+        await discord.channels.cache.get(m.channelId).send('Must be admin to perform setup!');
       }
 
     } else if (m.content === '!gm help') {
@@ -91,16 +92,16 @@ discord.on('messageCreate', async m => {
           const streak = await handleUser(userId, username);
           if (streak === 0) {
             if (botHasPermish){
-              try { await m.react('⏰'); } catch(e) { log(`ERROR: clock reaction ${m.guild.name}, ${m.channel.name}`, 'e'); log(e, 'e') }
+              try { await m.react('⏰'); } catch(e) { log(`ERROR: clock reaction ${m.guild.name}, ${m.channel.name}\n\t\t\t\t${e}`, 'e')}
             } else {
-              log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`);
+              log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`,'e');
               await discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
             }
           } else {
             const streakmoji = numToEmoji(streak); 
             for (var i = 0; i < streakmoji.length; i++){
               if (botHasPermish){
-                try { m.react(streakmoji[i]); } catch(e) { log(`ERROR: nummoji reaction ${m.guild.name}, ${m.channel.name}`, 'e'); log(e, 'e') }
+                try { m.react(streakmoji[i]); } catch(e) { log(`ERROR: nummoji reaction ${m.guild.name}, ${m.channel.name}\n\t\t\t\t${e}`, 'e')}
               } else {
                 log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`);
                 await discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
