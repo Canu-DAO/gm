@@ -36,7 +36,7 @@ async function handleUser (userId, username) {
       });
     } else if (check === -1) {
       return await clearUserStreak(userId, now).then( () => {
-        return -1;
+        return 1;
       });
     } else {
       return 0;
