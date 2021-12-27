@@ -58,7 +58,7 @@ function numToEmoji (num) {
 
 discord.on('messageCreate', async m => {
   if (!m.author.bot) {
-    const botHasPermish = m.channel.permissionsFor(m.guild.me).has(Permissions.FLAGS.READ_MESSAGE_HISTORY);
+    const botHasPermish = m.channel.permissionsFor(m.guild.me).has(Permissions.FLAGS.READ_MESSAGE_HISTORY&&Permissions.FLAGS.ADD_REACTIONS)
     const config = await getConfig(m.guild.id).then( (c) => { 
       if (c == undefined) { return 0 }
       else { return c }
@@ -94,6 +94,7 @@ discord.on('messageCreate', async m => {
                 if (botHasPermish){
                   m.react('⏰');
                 } else {
+                  log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`);
                   discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
                 }
               } else {
@@ -102,6 +103,7 @@ discord.on('messageCreate', async m => {
                   if (botHasPermish){
                     m.react(streakmoji[i]);
                   } else {
+                    log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`);
                     discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
                   }
                 }
