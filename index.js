@@ -58,7 +58,10 @@ function numToEmoji (num) {
 
 discord.on('messageCreate', async m => {
   if (!m.author.bot) {
-    const botHasPermish = m.channel.permissionsFor(m.guild.me).has(Permissions.FLAGS.READ_MESSAGE_HISTORY&&Permissions.FLAGS.ADD_REACTIONS)
+    const botHasPermish = m.channel.permissionsFor(m.guild.me).has(
+      Permissions.FLAGS.READ_MESSAGE_HISTORY&&
+      Permissions.FLAGS.ADD_REACTIONS&&
+      Permissions.FLAGS.EMBED_LINKS);
     const config = await getConfig(m.guild.id).then( (c) => { 
       if (c == undefined) { return 0 }
       else { return c }
@@ -79,13 +82,18 @@ discord.on('messageCreate', async m => {
       }
 
     } else if (m.content === '!gm help') {
-      const message = new MessageEmbed()
-        .setTitle('👋')
-        .setDescription(`thanks for adding me!\nmy purpose is to count your gm's\nsay gm once a day to increment your streak\nmiss a day and your streak gets reset :(\nwhen you have successfully gm'ed you'll see reaction emojis with your current streak\nif you haven't waited long enough since your last gm you'll see a ⏰ reaction`)
-        .addField('other commands',"`!gm` responds with your current streak and running total\n`!gm wen` responds with wen you last said it and wen to say it next\n`!gm rank` displays the current streak leader board\n`!gm setup` setups me up to track in the channel where it is sent\n")
-        .addField('===========================','gm')
-        .addField('brought to you by', '[CanuDAO](https://discord.gg/dv7SXUaMKD)');
-      discord.channels.cache.get(m.channelId).send({embeds:[message]});
+      if (botHasPermish) {
+        const message = new MessageEmbed()
+          .setTitle('👋')
+          .setDescription(`thanks for adding me!\nmy purpose is to count your gm's\nsay gm once a day to increment your streak\nmiss a day and your streak gets reset :(\nwhen you have successfully gm'ed you'll see reaction emojis with your current streak\nif you haven't waited long enough since your last gm you'll see a ⏰ reaction`)
+          .addField('other commands',"`!gm` responds with your current streak and running total\n`!gm wen` responds with wen you last said it and wen to say it next\n`!gm rank` displays the current streak leader board\n`!gm setup` setups me up to track in the channel where it is sent\n")
+          .addField('===========================','gm')
+          .addField('brought to you by', '[CanuDAO](https://discord.gg/dv7SXUaMKD)');
+        discord.channels.cache.get(m.channelId).send({embeds:[message]});
+      } else {
+        log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`);
+        await discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
+      }
     
     } else if (config !== 0) {
         if (m.content.toLowerCase() === config.keyword && config.channelId === m.channel.id) {
