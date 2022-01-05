@@ -71,7 +71,7 @@ discord.on('messageCreate', async m => {
     const username = m.author.tag;
 
     if (m.content.indexOf('!gm setup') === 0) {
-      if (m.channel.permissionsFor(m.author).has(Permissions.FLAGS.ADMINISTRATOR)) {
+      if (m.channel.permissionsFor(m.author).has(Permissions.FLAGS.MANAGE_GUILD)) {
         var keyword = m.content.split('!gm setup')[1].trim();
         if (keyword === '') { keyword = 'gm'; }
         await insertGuild(m.guild.name, m.channel.name, m.channel.id, keyword);
@@ -92,7 +92,7 @@ discord.on('messageCreate', async m => {
         discord.channels.cache.get(m.channelId).send({embeds:[message]});
       } else {
         log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`);
-        await discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
+        await discord.channels.cache.get(m.channelId).send("Missing permissions to send help message");
       }
     
     } else if (config !== 0) {
