@@ -78,7 +78,7 @@ discord.on('messageCreate', async m => {
         log(`New guild added! ${m.guild.name}, ${m.channel.name}, word: ${keyword}`, 'g');
         await discord.channels.cache.get(m.channelId).send(`Setup to track ${keyword} in ${m.channel.name}`);
       } else { 
-        await discord.channels.cache.get(m.channelId).send('Must be admin to perform setup!');
+        await discord.channels.cache.get(m.channelId).send('Must be a bot wrangler to perform setup!');
       }
 
     } else if (m.content === '!gm help') {
