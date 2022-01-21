@@ -36,14 +36,14 @@ export default function Dashboard({ guilds }) {
             <Thead>
             <Tr>
               <Th>server name</Th>
-              <Th>total gm's</Th>
+              <Th sx={{width:10, textAlign:'center'}}>total interactions</Th>
             </Tr>
             </Thead>
             <Tbody>
               { guilds.map((guild) => (
-                <Tr>
+                <Tr key={ guild.name }>
                   <Td>{ guild.name }</Td>
-                  <Td>{ guild.total }</Td>
+                  <Td sx={{width:10, textAlign:'center'}}>{ guild.total }</Td>
                 </Tr>
               ))}
             </Tbody>
@@ -75,7 +75,8 @@ export async function getServerSideProps() {
 
         guilds.push({name: guildDoc.guildName, total: total});
       } else { continue };
-    } 
+    }
+    guilds.sort((a,b)=>{return b.total - a.total})
     return {
       props: { guilds: guilds },
     }

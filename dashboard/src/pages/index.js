@@ -18,7 +18,7 @@ const Index = () => (
         gm bot
       </Heading>
       <Text fontSize="10vw">☀️</Text>
-      <Button>Add to Discord</Button>
+      <ChakraLink href="https://discord.com/api/oauth2/authorize?client_id=893356893865644083&permissions=85056&scope=bot"><Button>Add to Discord</Button></ChakraLink>
       <ChakraLink href="/dashboard"><Button>See Dashboard</Button></ChakraLink>
     </VStack>
     </Main>
