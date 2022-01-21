@@ -69,7 +69,8 @@ export async function clearUserStreak(userId, ts) {
   await col.updateOne(
     {'userId': userId},
     { $set: 
-      { 'streak': 1, 'ts': ts }
+      { 'streak': 1, 'ts': ts },
+      $push: { 'history': ts }
     });
 }
 
