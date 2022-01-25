@@ -179,15 +179,23 @@ discord.on('messageCreate', async m => {
             (rank[2] == undefined || rank[2].streak === 0) ? rank[2] = ({'username': 'no one', 'streak': 'NA'}) : null;
             (rank[3] == undefined || rank[3].streak === 0) ? rank[3] = ({'username': 'no one', 'streak': 'NA'}) : null;
             (rank[4] == undefined || rank[4].streak === 0) ? rank[4] = ({'username': 'no one', 'streak': 'NA'}) : null;
-            discord.channels.cache.get(m.channelId).send(
+            try { 
+              await discord.channels.cache.get(m.channelId).send(
               `🥇 ${rank[0].username} -> ${rank[0].streak}\n🥈 ${rank[1].username} -> ${rank[1].streak}\n🥉 ${rank[2].username} -> ${rank[2].streak}\n4️⃣ ${rank[3].username} -> ${rank[3].streak}\n5️⃣ ${rank[4].username} -> ${rank[4].streak}`);
+            } catch(e) {
+              return;
+            }
 
         } else if (m.content === '!gm wen') {
           const formerRaw = await getUser(userId).then( (t) => { return t.ts } );
           const formerTime = dayjs(formerRaw);
           const lower = formerTime.add(15,'hours');
           const upper = formerTime.endOf('day').add(1, 'day');
-          discord.channels.cache.get(m.channelId).send(`You previously said ${config.keyword} at <t:${formerTime.unix()}>. Say it again after <t:${lower.unix()}> but before <t:${upper.unix()}>`);
+          try {
+            await discord.channels.cache.get(m.channelId).send(`You previously said ${config.keyword} at <t:${formerTime.unix()}>. Say it again after <t:${lower.unix()}> but before <t:${upper.unix()}>`);
+          } catch(e) {
+            return;
+          }
         }
     } else {
         if (commands.indexOf(m.content) > -1) {
