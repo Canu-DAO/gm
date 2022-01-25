@@ -116,10 +116,14 @@ discord.on('messageCreate', async m => {
           .addField('other commands',"`!gm` responds with your current streak and running total\n`!gm wen` responds with wen you last said it and wen to say it next\n`!gm rank` displays the current streak leader board\n`!gm setup` setups me up to track in the channel where it is sent\n")
           .addField('===========================','gm')
           .addField('brought to you by', '[CanuDAO](https://discord.gg/dv7SXUaMKD)');
-        discord.channels.cache.get(m.channelId).send({embeds:[message]});
+        try { 
+          await discord.channels.cache.get(m.channelId).send({embeds:[message]});
+        } catch(e) { return }
       } else {
         log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`);
-        await discord.channels.cache.get(m.channelId).send("Missing permissions to send help message");
+        try { 
+          await discord.channels.cache.get(m.channelId).send("Missing permissions to send help message");
+        } catch(e) { return }
       }
     
     } else if (config !== 0) {
@@ -130,7 +134,9 @@ discord.on('messageCreate', async m => {
               try { await m.react('⏰'); } catch(e) { log(`ERROR: clock reaction ${m.guild.name}, ${m.channel.name}\n\t\t\t\t${e}`, 'e')}
             } else {
               log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`,'e');
-              await discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
+              try {
+                await discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
+              } catch(e) { return }
             }
           } else {
             const streakmoji = numToEmoji(streak); 
@@ -139,7 +145,9 @@ discord.on('messageCreate', async m => {
                 try { m.react(streakmoji[i]); } catch(e) { log(`ERROR: nummoji reaction ${m.guild.name}, ${m.channel.name}\n\t\t\t\t${e}`, 'e')}
               } else {
                 log(`Missing permissions in ${m.guild.name}, ${m.channel.name}`);
-                await discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
+                try {
+                  await discord.channels.cache.get(m.channelId).send("Missing permissions to react to message");
+                } catch(e) { return }
               }
             }
           }
@@ -153,9 +161,13 @@ discord.on('messageCreate', async m => {
             else { return u; } 
           });
           if (user === 0) {
-            discord.channels.cache.get(m.channelId).send(`gm ${m.author}, you've never said gm, give it a try!`);
+            try { 
+              await discord.channels.cache.get(m.channelId).send(`gm ${m.author}, you've never said gm, give it a try!`);
+            } catch(e) { return }
           } else {
-            discord.channels.cache.get(m.channelId).send(`gm ${m.author}, you have a streak of ${user.streak} and overall have said ${config.keyword} ${user.history.length} times`);
+            try {
+              await discord.channels.cache.get(m.channelId).send(`gm ${m.author}, you have a streak of ${user.streak} and overall have said ${config.keyword} ${user.history.length} times`);
+            } catch(e) { return }
           }
 
         } else if (m.content === '!gm avg') {
@@ -169,7 +181,9 @@ discord.on('messageCreate', async m => {
             })
             return ret/length;
           });
-          discord.channels.cache.get(m.channelId).send(`You usually say ${config.keyword} around ${Math.round(avg)}:00`);
+          try {
+            await discord.channels.cache.get(m.channelId).send(`You usually say ${config.keyword} around ${Math.round(avg)}:00`);
+          } catch(e) { return }
 
         } else if (m.content === '!gm rank') {
             const cutoff = dayjs().subtract(2,'day').valueOf();
@@ -182,9 +196,7 @@ discord.on('messageCreate', async m => {
             try { 
               await discord.channels.cache.get(m.channelId).send(
               `🥇 ${rank[0].username} -> ${rank[0].streak}\n🥈 ${rank[1].username} -> ${rank[1].streak}\n🥉 ${rank[2].username} -> ${rank[2].streak}\n4️⃣ ${rank[3].username} -> ${rank[3].streak}\n5️⃣ ${rank[4].username} -> ${rank[4].streak}`);
-            } catch(e) {
-              return;
-            }
+            } catch(e) { return }
 
         } else if (m.content === '!gm wen') {
           const formerRaw = await getUser(userId).then( (t) => { return t.ts } );
@@ -193,13 +205,13 @@ discord.on('messageCreate', async m => {
           const upper = formerTime.endOf('day').add(1, 'day');
           try {
             await discord.channels.cache.get(m.channelId).send(`You previously said ${config.keyword} at <t:${formerTime.unix()}>. Say it again after <t:${lower.unix()}> but before <t:${upper.unix()}>`);
-          } catch(e) {
-            return;
-          }
+          } catch(e) { return }
         }
     } else {
         if (commands.indexOf(m.content) > -1) {
-          return discord.channels.cache.get(m.channelId).send('Do setup with\n```!gm setup```')
+          try {
+            await discord.channels.cache.get(m.channelId).send('Do setup with\n```!gm setup```')
+          } catch(e) { return }
         }
     }
   }
