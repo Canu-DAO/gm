@@ -53,6 +53,15 @@ export async function getRank(cutoff) {
     {'_id':0, 'streak':1, 'username': 1}).sort({'streak': -1}).toArray()
 }
 
+export async function getTotalRank() {
+  const history =  await col.find({'history': { $exists: true }}, { projection: { _id: 0, 'history':1, 'username': 1 }}).toArray()
+  var countedHistory = [];
+  history.forEach( h => {
+    countedHistory.push({ username:h.username, historyCount: h.history.length })
+  })
+  return countedHistory.sort((a,b) => { return b.historyCount - a.historyCount});
+}
+
 export async function incrUserStreak(userId, ts) {
   const options = { returnNewDocument: true, returnDocument: 'after' };
   return await col.findOneAndUpdate(

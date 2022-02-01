@@ -2,7 +2,7 @@ import { Client, Intents, Permissions, MessageEmbed } from 'discord.js';
 import dayjs from 'dayjs';
 import { keys } from './keys.js';
 import { sleep, log } from './utils.js';
-import { mongoConnect, insertGuild, getConfig, initUser, getUser, getRank, incrUserStreak, clearUserStreak, zeroUserStreak } from './mongo.js';
+import { mongoConnect, insertGuild, getConfig, initUser, getUser, getRank, getTotalRank, incrUserStreak, clearUserStreak, zeroUserStreak } from './mongo.js';
 
 const discord = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_MESSAGE_REACTIONS] });
 
@@ -206,6 +206,19 @@ discord.on('messageCreate', async m => {
           try {
             await discord.channels.cache.get(m.channelId).send(`You previously said ${config.keyword} at <t:${formerTime.unix()}>. Say it again after <t:${lower.unix()}> but before <t:${upper.unix()}>`);
           } catch(e) { return }
+        
+        } else if (m.content === '!gm rank total') {
+          const rank = await getTotalRank();
+          (rank[0] == undefined || rank[0].historyCount === 0) ? rank[0] = ({'username': 'no one', 'streak': 'NA'}) : null;
+          (rank[1] == undefined || rank[1].historyCount === 0) ? rank[1] = ({'username': 'no one', 'streak': 'NA'}) : null;
+          (rank[2] == undefined || rank[2].historyCount === 0) ? rank[2] = ({'username': 'no one', 'streak': 'NA'}) : null;
+          (rank[3] == undefined || rank[3].historyCount === 0) ? rank[3] = ({'username': 'no one', 'streak': 'NA'}) : null;
+          (rank[4] == undefined || rank[4].historyCount === 0) ? rank[4] = ({'username': 'no one', 'streak': 'NA'}) : null;
+          try { 
+            await discord.channels.cache.get(m.channelId).send(
+            `**All time ranking**:\n🥇 ${rank[0].username} -> ${rank[0].historyCount}\n🥈 ${rank[1].username} -> ${rank[1].historyCount}\n🥉 ${rank[2].username} -> ${rank[2].historyCount}\n4️⃣ ${rank[3].username} -> ${rank[3].historyCount}\n5️⃣ ${rank[4].username} -> ${rank[4].historyCount}`);
+          } catch(e) { return }
+
         }
     } else {
         if (commands.indexOf(m.content) > -1) {
