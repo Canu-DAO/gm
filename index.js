@@ -98,14 +98,19 @@ discord.on('messageCreate', async m => {
     const username = m.author.tag;
 
     if (m.content.indexOf('!gm setup') === 0) {
-      if (m.channel.permissionsFor(m.author).has(Permissions.FLAGS.MANAGE_GUILD)) {
-        var keyword = m.content.split('!gm setup')[1].trim();
-        if (keyword === '') { keyword = 'gm'; }
-        await insertGuild(m.guild.name, m.channel.name, m.channel.id, keyword);
-        log(`New guild added! ${m.guild.name}, ${m.channel.name}, word: ${keyword}`, 'g');
-        await discord.channels.cache.get(m.channelId).send(`Setup to track ${keyword} in ${m.channel.name}`);
-      } else { 
-        await discord.channels.cache.get(m.channelId).send('Must be a bot wrangler to perform setup!');
+      try {
+        if (m.channel.permissionsFor(m.author).has(Permissions.FLAGS.MANAGE_GUILD)) {
+          var keyword = m.content.split('!gm setup')[1].trim();
+          if (keyword === '') { keyword = 'gm'; }
+          await insertGuild(m.guild.name, m.channel.name, m.channel.id, keyword);
+          log(`New guild added! ${m.guild.name}, ${m.channel.name}, word: ${keyword}`, 'g');
+          await discord.channels.cache.get(m.channelId).send(`Setup to track ${keyword} in ${m.channel.name}`);
+        } else { 
+          await discord.channels.cache.get(m.channelId).send('Must be a bot wrangler to perform setup!');
+        }
+      } catch (e) {
+        console.log(e);
+        return;
       }
 
     } else if (m.content === '!gm help') {
